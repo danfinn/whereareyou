@@ -12,11 +12,7 @@ var hereMapID = "JGc5IdagIJa1autqH5Ns"
 var hereMapCode = "Wk9lyx1sVuBDB-cjU6MuJQ"
 
 type point struct {
-	lat string
-	long string
-	city string
-	country string
-
+	lat, long, city, country string
 }
 
 // Takes an IP and outputs a map jpg.  That IP could come in the mapip query param 
