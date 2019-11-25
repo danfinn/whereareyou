@@ -19,17 +19,25 @@ type point struct {
 
 }
 
-func getIP(w http.ResponseWriter, r *http.Request) {
+// Takes an IP and outputs a map jpg.  That IP could come in the mapip query param 
+// or if not specified it will pull it from the request header 
+func mapIP(w http.ResponseWriter, r *http.Request) {
 	ip, port, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
 		fmt.Fprintf(w, "userip: %q is not IP:port format", r.RemoteAddr)
 	}
-	// Check if mapip query param was set, if not use IP from request
+	// Check if mapip query param was set, if it is we will use that
 	query := r.URL.Query()
 	mapip, present := query["mapip"]
 	if present && len(mapip) > 0 {
-		ip = mapip[0]
-		fmt.Println(ip)
+		value := mapip[0]
+		if net.ParseIP(value) == nil {
+			fmt.Fprintf(w, "IP %s not in correct format", value)
+			return
+		} else {
+			ip_addr := net.ParseIP(value)
+			ip = ip_addr.String()
+		}	
 	}
 
   	forward := r.Header.Get("X-Forwarded-For")
@@ -82,6 +90,6 @@ func privateIP(ip string) (bool) {
 }
 
 func main() {
-	http.HandleFunc("/", getIP)
+	http.HandleFunc("/", mapIP)
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
