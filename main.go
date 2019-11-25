@@ -19,36 +19,25 @@ type point struct {
 
 }
 
-func mapIP(w http.ResponseWriter, r *http.Request) {
-	ips, ok := r.URL.Query()["ip"]
-
-	if !ok || len(ips[0]) < 1 {
-		fmt.Fprintf(w, "<p>IP not provided</p>")
-	}
-
-	ip := ips[0]
-
-	if ip == "::1" || privateIP(ip) {
-                fmt.Fprintf(w, "<p>Unable to map private IP</p>")
-        } else {
-                ip_geo := geoIP(ip)
-                fmt.Fprintf(w, "<img src=https://image.maps.api.here.com/mia/1.6/mapview?app_id=%s&app_code=%s&i&lat=%s&lon=%s&h=512&w=512&vt=0&z=14</img>",
-                        hereMapID, hereMapCode, ip_geo.lat, ip_geo.long)
-        }
-}
-
 func getIP(w http.ResponseWriter, r *http.Request) {
 	ip, port, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
 		fmt.Fprintf(w, "userip: %q is not IP:port format", r.RemoteAddr)
 	}
+	// Check if mapip query param was set, if not use IP from request
+	query := r.URL.Query()
+	mapip, present := query["mapip"]
+	if present && len(mapip) > 0 {
+		ip = mapip[0]
+		fmt.Println(ip)
+	}
 
-	forward := r.Header.Get("X-Forwarded-For")
-	if forward == "" { forward = "unset" }
+  	forward := r.Header.Get("X-Forwarded-For")
+       	if forward == "" { forward = "unset" }
 
-	fmt.Fprintf(w, "<p>IP: %s</p>", ip)
-	fmt.Fprintf(w, "<p>port:  %s</p>", port)
-	fmt.Fprintf(w, "<p>X-Forwarded-For: %s</p>", forward)
+       	fmt.Fprintf(w, "<p>IP: %s</p>", ip)
+       	fmt.Fprintf(w, "<p>port:  %s</p>", port)
+       	fmt.Fprintf(w, "<p>X-Forwarded-For: %s</p>", forward)
 
 	if ip == "::1" || privateIP(ip) {
 		fmt.Fprintf(w, "<p>Unable to map private IP</p>")
@@ -94,6 +83,5 @@ func privateIP(ip string) (bool) {
 
 func main() {
 	http.HandleFunc("/", getIP)
-	http.HandleFunc("/mapip", mapIP)
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
