@@ -15,21 +15,27 @@ type point struct {
 	lat, long, city, country string
 }
 
-// Takes an IP and outputs a map jpg.  That IP could come in the mapip query param 
+// Takes an IP or a hostname and outputs a map jpg.  That IP/hostname could come in the mapip query param 
 // or if not specified it will pull it from the request header 
-func mapIP(w http.ResponseWriter, r *http.Request) {
+func mapHost(w http.ResponseWriter, r *http.Request) {
 	ip, port, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
 		fmt.Fprintf(w, "userip: %q is not IP:port format", r.RemoteAddr)
 	}
-	// Check if mapip query param was set, if it is we will use that
+	// Check if host query param was set, if it is we will use that
 	query := r.URL.Query()
-	mapip, present := query["mapip"]
-	if present && len(mapip) > 0 {
-		value := mapip[0]
+	host, present := query["map"]
+	if present && len(host) > 0 {
+		value := host[0]
 		if net.ParseIP(value) == nil {
-			fmt.Fprintf(w, "IP %s not in correct format", value)
-			return
+			// Must be a hostname, lets resolve it to an IP
+			hostIP, err := net.LookupHost(value)
+			if err == nil {
+				ip_addr := net.ParseIP(hostIP[0])
+                        	ip = ip_addr.String()
+			} else {
+				fmt.Fprintf(w,"<p>Unable to parse IP or lookup hostname</p>")
+			}
 		} else {
 			ip_addr := net.ParseIP(value)
 			ip = ip_addr.String()
@@ -86,6 +92,6 @@ func privateIP(ip string) (bool) {
 }
 
 func main() {
-	http.HandleFunc("/", mapIP)
+	http.HandleFunc("/", mapHost)
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
