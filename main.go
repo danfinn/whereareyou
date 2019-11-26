@@ -1,6 +1,7 @@
 package main
 
-import ("fmt"
+import (
+	"fmt"
 	"github.com/qioalice/ipstack"
 	"log"
 	"net"
@@ -15,8 +16,8 @@ type point struct {
 	lat, long, city, country string
 }
 
-// Takes an IP or a hostname and outputs a map jpg.  That IP/hostname could come in the mapip query param 
-// or if not specified it will pull it from the request header 
+// Takes an IP or a hostname and outputs a map jpg.  That IP/hostname could come in the mapip query param
+// or if not specified it will pull it from the request header
 func mapHost(w http.ResponseWriter, r *http.Request) {
 	ip, port, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
@@ -32,18 +33,20 @@ func mapHost(w http.ResponseWriter, r *http.Request) {
 			hostIP, err := net.LookupHost(value)
 			if err == nil {
 				ip_addr := net.ParseIP(hostIP[0])
-                        	ip = ip_addr.String()
+				ip = ip_addr.String()
 			} else {
-				fmt.Fprint(w,"<p>Unable to parse IP or lookup hostname</p>")
+				fmt.Fprint(w, "<p>Unable to parse IP or lookup hostname</p>")
 			}
 		} else {
 			ip_addr := net.ParseIP(value)
 			ip = ip_addr.String()
-		}	
+		}
 	}
 
-  	forward := r.Header.Get("X-Forwarded-For")
-       	if forward == "" { forward = "unset" }
+	forward := r.Header.Get("X-Forwarded-For")
+	if forward == "" {
+		forward = "unset"
+	}
 
 	fmt.Fprint(w, "<html>")
 	fmt.Fprint(w, "<head>")
@@ -52,9 +55,9 @@ func mapHost(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "<title>WhereAmI</title>")
 	fmt.Fprint(w, "<h1>Where you at?</h1>")
 	fmt.Fprint(w, "<div>")
-        fmt.Fprintf(w, "<p>IP: %s</p>", ip)
-        fmt.Fprintf(w, "<p>port:  %s</p>", port)
-        fmt.Fprintf(w, "<p>X-Forwarded-For: %s</p>", forward)
+	fmt.Fprintf(w, "<p>IP: %s</p>", ip)
+	fmt.Fprintf(w, "<p>port:  %s</p>", port)
+	fmt.Fprintf(w, "<p>X-Forwarded-For: %s</p>", forward)
 	fmt.Fprint(w, "</div")
 
 	if ip == "::1" || privateIP(ip) {
@@ -73,21 +76,21 @@ func geoIP(ip string) point {
 	cli, err := ipstack.New(
 		ipstack.ParamToken(ipstackKey),
 		ipstack.ParamDisableFirstMeCall())
-	res,err := cli.IP(ip)
+	res, err := cli.IP(ip)
 	if err != nil {
 		fmt.Println("error getting IP info")
 	}
-	place := point {
-		lat: fmt.Sprintf("%f", res.Latitide),
-		long: fmt.Sprintf("%f", res.Longitude),
-		city: res.City,
+	place := point{
+		lat:     fmt.Sprintf("%f", res.Latitide),
+		long:    fmt.Sprintf("%f", res.Longitude),
+		city:    res.City,
 		country: res.CountryName,
 	}
 	return place
 }
 
 // Checks if an IP is a RFC 1918 private IP
-func privateIP(ip string) (bool) {
+func privateIP(ip string) bool {
 	private := false
 	IP := net.ParseIP(ip)
 	if IP == nil {
