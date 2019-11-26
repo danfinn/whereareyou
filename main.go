@@ -34,7 +34,7 @@ func mapHost(w http.ResponseWriter, r *http.Request) {
 				ip_addr := net.ParseIP(hostIP[0])
                         	ip = ip_addr.String()
 			} else {
-				fmt.Fprintf(w,"<p>Unable to parse IP or lookup hostname</p>")
+				fmt.Fprint(w,"<p>Unable to parse IP or lookup hostname</p>")
 			}
 		} else {
 			ip_addr := net.ParseIP(value)
@@ -45,16 +45,26 @@ func mapHost(w http.ResponseWriter, r *http.Request) {
   	forward := r.Header.Get("X-Forwarded-For")
        	if forward == "" { forward = "unset" }
 
-       	fmt.Fprintf(w, "<p>IP: %s</p>", ip)
-       	fmt.Fprintf(w, "<p>port:  %s</p>", port)
-       	fmt.Fprintf(w, "<p>X-Forwarded-For: %s</p>", forward)
+	fmt.Fprint(w, "<html>")
+	fmt.Fprint(w, "<head>")
+	fmt.Fprint(w, "<link rel='stylesheet' type='text/css' href='static/styles.css' />")
+	fmt.Fprint(w, "</head>")
+	fmt.Fprint(w, "<title>WhereAmI</title>")
+	fmt.Fprint(w, "<h1>Where you at?</h1>")
+	fmt.Fprint(w, "<div>")
+        fmt.Fprintf(w, "<p>IP: %s</p>", ip)
+        fmt.Fprintf(w, "<p>port:  %s</p>", port)
+        fmt.Fprintf(w, "<p>X-Forwarded-For: %s</p>", forward)
+	fmt.Fprint(w, "</div")
 
 	if ip == "::1" || privateIP(ip) {
-		fmt.Fprintf(w, "<p>Unable to map private IP</p>")
+		fmt.Fprint(w, "<p>Unable to map private IP</p>")
 	} else {
 		ip_geo := geoIP(ip)
+		fmt.Fprint(w, "<p>")
 		fmt.Fprintf(w, "<img src=https://image.maps.api.here.com/mia/1.6/mapview?app_id=%s&app_code=%s&i&lat=%s&lon=%s&h=512&w=512&vt=0&z=14</img>",
 			hereMapID, hereMapCode, ip_geo.lat, ip_geo.long)
+		fmt.Fprint(w, "</p>")
 	}
 }
 
@@ -93,5 +103,6 @@ func privateIP(ip string) (bool) {
 
 func main() {
 	http.HandleFunc("/", mapHost)
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
