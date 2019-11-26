@@ -108,10 +108,10 @@ func privateIP(ip string) bool {
 func main() {
 
 	// Get user flags
-	port := flag.String("port", "8080", "port to listen on")
+	port := flag.String("p", "8080", "port to listen on")
 	flag.Parse()
 
 	http.HandleFunc("/", mapHost)
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	log.Fatal(http.ListenAndServe(":"+*port, nil))
 }
