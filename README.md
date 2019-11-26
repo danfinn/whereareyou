@@ -1,8 +1,8 @@
 # whereareyou
-Pinpoints the location of your http request on a map.
+A GO webapp that pinpoints the location of your http request on a map.
 
 ## Usage
-When run this app listens on port 8080.  
+When run this app it listens on port 8080.  
 A request to / will check your ```Remote_Addr``` 
 header and map your location from that.  
 You can also specify a hostname or IP as a query parameter:
